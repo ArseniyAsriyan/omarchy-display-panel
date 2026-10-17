@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.arseniyasriyan.display",
+  "name": "Display",
+  "version": "1.0.0",
+  "author": "ArseniyAsriyan",
+  "license": "MIT",
+  "description": "Visual display panel: per-monitor resolution, refresh rate, orientation, scale, brightness, text size, night mode, and workspace-to-monitor binding.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Display",
+    "description": "Set resolution, refresh rate, orientation, brightness, night mode and bind workspaces to monitors.",
+    "category": "System",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}
