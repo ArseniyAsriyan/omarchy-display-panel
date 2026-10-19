@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "ArseniyAsriyan",
   "license": "MIT",
-  "description": "Visual display panel: per-monitor resolution, refresh rate, orientation, scale, brightness, text size, night mode, and workspace-to-monitor binding.",
+  "description": "Visual display panel: per-monitor resolution, refresh rate, orientation, scale, brightness, text size, and night mode.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "Display",
-    "description": "Set resolution, refresh rate, orientation, brightness, night mode and bind workspaces to monitors.",
+    "description": "Set resolution, refresh rate, orientation, scale, brightness, text size and night mode per monitor.",
     "category": "System",
     "defaultSection": "right",
     "allowMultiple": false

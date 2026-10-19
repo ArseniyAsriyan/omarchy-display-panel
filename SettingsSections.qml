@@ -5,10 +5,10 @@ import qs.Ui
 import qs.Commons
 import "Model.js" as Model
 
-// Everything under the arrangement map, laid out the way Windows 11 groups it:
+// Everything under the display list, laid out the way Windows 11 groups it:
 // a display picker, then per-display Display resolution, Display orientation,
-// Scale, and — when more than one screen is attached — Multiple displays. Night
-// light and brightness follow in NightSection.
+// Display position, Scale, Brightness and Text size. Night light follows in
+// NightSection.
 Column {
   id: sections
   required property QtObject host
@@ -216,33 +216,6 @@ Column {
           onClicked: sections.host.applyScale(modelData)
         }
       }
-    }
-  }
-
-  // ---- Multiple displays (Windows 11's duplicate / extend / single) ----------------
-
-  Column {
-    width: parent.width
-    spacing: Style.space(6)
-    visible: sections.host.displays.length > 1
-
-    PanelSectionHeader {
-      text: "MULTIPLE DISPLAYS"
-      foreground: sections.host.bar.foreground
-      fontFamily: sections.host.bar.fontFamily
-    }
-
-    SettingsDropdown {
-      width: sections.width
-      host: sections.host
-      label: "Multiple displays"
-      options: [
-        { value: "extend", label: "Extend" },
-        { value: "mirror", label: "Duplicate these displays" },
-        { value: "single", label: "Show only on " + (sections.host.targetDisplay ? sections.host.targetDisplay.name : "this display") }
-      ]
-      currentValue: sections.host.currentArrangement()
-      onPicked: function(v) { sections.host.applyArrangement(v) }
     }
   }
 

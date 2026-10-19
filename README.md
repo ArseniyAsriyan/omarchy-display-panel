@@ -1,39 +1,34 @@
 # Display — an Omarchy shell panel
 
 A display-control panel for the [Omarchy](https://omarchy.org/) bar, modelled on
-**Windows 11 → Settings → System → Display**, plus workspace-to-monitor binding for
-Hyprland.
+**Windows 11 → Settings → System → Display**.
 
 ![Display panel](preview.png)
 
 Click the monitor glyph in the bar and you get, in one popup:
 
-- **A workspace-cell grid.** Not a scaled picture of your desktop — a grid of
-  workspace cells numbered `1..N`, one per Hyprland workspace. Each cell shows
-  which monitor currently holds it, or *free* when the workspace does not exist
-  yet. Click a cell and an inline monitor picker appears under the grid
-  (`Bind workspace N to:  HDMI-A-1  DP-2  Cancel`, with the current owner
-  highlighted) — click a monitor to move that workspace there.
 - **A display list** with an on/off switch per monitor. Like the built-in Display
   panel it reports which output is **focused** rather than offering a user-chosen
   primary screen — Hyprland has no primary output, only drifting focus, so the
-  panel shows the honest signal (`· focused`).
+  panel shows the honest signal (`· focused`). Turning a display off re-lays the
+  remaining displays from the top-left and clears any mirroring, so the surviving
+  screen keeps working normally.
 - **Per-display settings** in the Windows 11 grouping and order:
   - **Display resolution** — every mode the monitor reports — and **refresh rate**.
   - **Display orientation** — landscape, portrait, and their flipped variants.
+  - **Display position** — move the selected display left / right / up / down
+    relative to its neighbours.
   - **Scale**, filtered to values Hyprland accepts for the current resolution.
-  - **Multiple displays** — *Extend*, *Duplicate these displays*,
-    *Show only on `<name>`*.
   - **Brightness** and **Text size**.
 - **Night mode** — a blue-light filter via `hyprsunset` with a colour-temperature
   slider.
 - **A 15-second confirmation dialog**, Windows 11 style. Any risky change
-  (resolution, refresh rate, orientation, on/off, arrangement, workspace move)
-  opens a separate centred window asking *"Keep these display settings?"* with
-  **Revert** and **Keep changes**, a countdown bar, and a live "Reverting in Ns"
-  label. Do nothing, click the dimmed backdrop, or press Escape and the change is
-  rolled back — so a refresh rate your monitor cannot hold never strands you on a
-  black screen.
+  (resolution, refresh rate, orientation, position, on/off) opens a separate
+  centred window asking *"Keep these display settings?"* with **Revert** and
+  **Keep changes**, a countdown bar, and a live "Reverting in Ns" label. Do
+  nothing, click the dimmed backdrop, or press Escape and the change is rolled
+  back — so a refresh rate your monitor cannot hold never strands you on a black
+  screen.
 
 Kept settings are written to a managed block in `~/.config/hypr/monitors.lua`, so
 they survive a reload or reboot.
@@ -123,12 +118,12 @@ omarchy plugin enable omarchy.monitor
 - Brightness applies to the selected monitor.
 - Scale choices are limited to values Hyprland accepts cleanly for the current
   resolution.
-- Workspace binding uses Hyprland's own workspace→monitor moves; a workspace that
-  does not exist yet is created on the target monitor, focused there, then focus
-  is returned where it was, so binding does not steal your cursor or keyboard.
+- Turning a display off disables it and re-lays the remaining enabled displays
+  from the top-left in one batched call, so no dead space or dangling mirror is
+  left behind.
 - There is no drag-and-drop anywhere in the panel, by necessity: clicking inside
   this style of bar popup dismisses it, which would kill any drag mid-gesture.
-  Click-to-bind is the interaction that survives.
+  Arrangement is done with the position buttons instead.
 
 ## License
 

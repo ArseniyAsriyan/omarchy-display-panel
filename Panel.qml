@@ -8,9 +8,9 @@ import "Model.js" as Model
 
 // Display Control — a bar widget for the Omarchy shell.
 //
-// The panel is a visual arrangement map (swap monitors to renumber them, as in
-// Windows 11) plus per-display settings: resolution, refresh rate, rotation,
-// scale, brightness, text size, on/off, and a hyprsunset night mode.
+// The panel is a display list plus per-display settings in the Windows 11
+// grouping: resolution, refresh rate, orientation, position, scale, brightness,
+// text size, on/off, and a hyprsunset night mode.
 //
 // Nothing about the monitor set is hardcoded — every display, mode, rate and
 // geometry comes from `hyprctl monitors all -j`, so the plugin works on any
@@ -382,17 +382,6 @@ Panel {
     applyMonitor(d, { disabled: false, mode: "preferred", position: "auto", scale: scale })
   }
 
-  // Arrangement is derived, never stored, so the dropdown always reflects the
-  // live Hyprland state. `mirrorOf` is Hyprland's own field: "none" when the
-  // output is not a mirror, otherwise the source monitor's id as a string.
-  function currentArrangement() {
-    var d = root.targetDisplay
-    if (!d || !d.enabled) return "extend"
-    if (d.mirrorOf && d.mirrorOf !== "" && d.mirrorOf !== "none") return "mirror"
-    if (root.enabledDisplayCount <= 1) return "single"
-    return "extend"
-  }
-
   // Move the selected display one step in space (left/right = swap with the
   // neighbouring monitor horizontally, up/down = step in y). Applies the new
   // layout atomically and asks for confirmation.
@@ -423,54 +412,6 @@ Panel {
     layoutSettle.restart()
   }
 
-  function applyArrangement(mode) {
-    var d = root.targetDisplay
-    if (!d || !Model.isSafeName(d.name)) return
-
-    if (mode === "single") {
-      beginChange("Show only on " + d.name)
-      var singleBatch = []
-      for (var i = 0; i < root.displays.length; i++) {
-        var other = root.displays[i]
-        if (other.name === d.name) singleBatch.push({ display: other, fields: { disabled: false, mode: "preferred", position: "0x0", mirror: "" } })
-        else singleBatch.push({ display: other, fields: { disabled: true } })
-      }
-      applyMonitorBatch(singleBatch)
-      return
-    }
-
-    if (mode === "mirror") {
-      var target = root.focusedName !== d.name ? root.focusedName : ""
-      if (target === "") {
-        for (var j = 0; j < root.displays.length; j++) {
-          if (root.displays[j].name !== d.name && root.displays[j].enabled) { target = root.displays[j].name; break }
-        }
-      }
-      if (target === "" || !Model.isSafeName(target)) return
-      beginChange("Duplicate " + d.name + " onto " + target)
-      // One call: clear any mirroring on the source monitor, make sure it is on,
-      // then mirror it onto the chosen target. Sending mirror and disabled
-      // separately can leave the output mirrored onto nothing.
-      runAction(["hyprctl", "eval",
-        "hl.monitor({ output = \"" + d.name + "\", disabled = false, mode = \"preferred\", mirror = \"\" }); "
-        + "hl.monitor({ output = \"" + d.name + "\", mirror = \"" + target + "\" })"])
-      return
-    }
-
-    // Extend: turn every connected display on and let Hyprland lay them out
-    // itself (position = "auto"). Deliberately naive: no manual geometry, the
-    // compositor decides where each output goes.
-    beginChange("Extend")
-    var extendBatch = []
-    for (var p = 0; p < root.displays.length; p++) {
-      extendBatch.push({
-        display: root.displays[p],
-        fields: { disabled: false, mode: "preferred", position: "auto", mirror: "" }
-      })
-    }
-    applyMonitorBatch(extendBatch)
-  }
-
   function toggleDisplay(display) {
     if (!display || !Model.isSafeName(display.name)) return
     if (display.enabled && root.enabledDisplayCount <= 1) return
@@ -486,7 +427,40 @@ Panel {
       var spot = Model.nearestFreePosition(display, others, b.x + b.width, b.y)
       applyMonitor(display, { disabled: false, mode: "preferred", position: spot.x + "x" + spot.y, mirror: "" })
     } else {
-      applyMonitor(display, { disabled: true })
+      // Turning off: first re-lay the remaining enabled displays from 0x0 and
+      // clear any mirror pointing at the output about to go dark, THEN disable
+      // it. Order matters — if we disable a mirror source while a mirror still
+      // points at it, Hyprland is left with a dangling mirror while it unmaps
+      // the output's layer surfaces, which crashes the compositor
+      // (CInputManager::refocusLastWindow -> ILuaConfigValue::asString, seen on
+      // Hyprland 0.56.2). Dropping the mirror first keeps the survivor
+      // standalone before its source disappears.
+      var remaining = []
+      for (var j = 0; j < root.displays.length; j++) {
+        var o = root.displays[j]
+        if (o.name !== display.name && o.enabled) remaining.push(o)
+      }
+      var laid = Model.tileLayout(remaining.map(function(d) {
+        return { name: d.name, width: d.width, height: d.height }
+      }))
+      var posByName = {}
+      for (var k = 0; k < laid.length; k++) posByName[laid[k].name] = laid[k]
+      var offBatch = []
+      for (var m = 0; m < remaining.length; m++) {
+        var r = remaining[m]
+        var p = posByName[r.name]
+        offBatch.push({
+          display: r,
+          fields: {
+            disabled: false,
+            mode: "preferred",
+            position: p ? (p.x + "x" + p.y) : "auto",
+            mirror: ""
+          }
+        })
+      }
+      offBatch.push({ display: display, fields: { disabled: true } })
+      applyMonitorBatch(offBatch)
     }
   }
 

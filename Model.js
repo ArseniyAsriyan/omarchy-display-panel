@@ -214,14 +214,13 @@ function closestRateIndex(rates, currentHz) {
   return best
 }
 
-// ---- orientation / arrangement ----------------------------------------------
+// ---- orientation -----------------------------------------------------------
 //
-// Four Windows-11-style arrangement choices, mapped onto Hyprland primitives:
-//   landscape -> normal transform
-//   portrait  -> 90 degree transform
-//   mirror    -> this display mirrors the primary one
-//   extend    -> normal, positioned on the map (the default desktop behaviour)
-//   single    -> only this display is on
+// Four orientations, mapped onto Hyprland transform values:
+//   landscape         -> 0 (normal)
+//   portrait          -> 1 (90 degrees)
+//   landscape-flipped -> 2 (180 degrees)
+//   portrait-flipped  -> 3 (270 degrees)
 
 var ORIENTATIONS = [
   { id: "landscape", label: "Landscape", glyph: "\uF0377", transform: 0 },
@@ -459,10 +458,10 @@ function nearestFreePosition(moving, others, proposedX, proposedY) {
   return { x: Math.round(proposedX), y: Math.round(proposedY) }
 }
 
-// Lay displays out left to right, top edges aligned, with no overlap. Used to
-// rebuild a sensible arrangement ("Extend") from scratch, where
-// Hyprland has no remembered geometry to fall back on. The first display is
-// anchored at 0x0; every later one starts where the previous one ends.
+// Lay displays out left to right, top edges aligned, with no overlap. Used when
+// turning a display off to re-lay the remaining displays from the top-left. The
+// first display is anchored at 0x0; every later one starts where the previous
+// one ends.
 function tileLayout(displays) {
   var out = []
   if (!Array.isArray(displays) || displays.length === 0) return out
